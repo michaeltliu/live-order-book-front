@@ -136,6 +136,15 @@ function UserDataPanel({socket, roomUserData, setRoomId}) {
 function OrderBook() {
   const [orderData, setOrderData] = useState({'bids':[], 'asks':[]});
 
+  const rows = Array(100).fill().map((_,i) => 
+    <tr>
+      <th></th>
+      <th></th>
+      <th>{i}</th>
+      <th></th>
+      <th></th>
+    </tr>
+  )
 
   return (
     <table>
@@ -149,7 +158,7 @@ function OrderBook() {
         </tr>
       </thead>
       <tbody>
-
+        {rows}
       </tbody>
     </table>
   )

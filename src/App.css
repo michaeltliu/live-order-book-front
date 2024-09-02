@@ -10,9 +10,10 @@
 div.wrapper {
   overflow-y: scroll;
   height: 600px;
+  width: 30%;
 }
 
-th {
+th, td {
   border: 1px solid black;
 }
 

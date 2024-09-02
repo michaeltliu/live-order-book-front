@@ -5,13 +5,13 @@ import { io } from 'socket.io-client';
 
 
 async function requestOrderBook(setOrderData) {
-  const response = await fetch("http://127.0.0.1:5000/order-book");
+  const response = await fetch("http://127.0.0.1:8080/order-book");
   const data = await response.json();
   setOrderData(data);
 }
 
 async function requestRoomUserData(room_id, user_id, setRoomUserData) {
-  const response = await fetch(`http://127.0.0.1:5000/user-data/${room_id}/${user_id}`);
+  const response = await fetch(`http://127.0.0.1:8080/user-data/${room_id}/${user_id}`);
   const data = await response.json();
   setRoomUserData(data);
 }
@@ -23,11 +23,10 @@ function LoginForm({setIsLoggedIn, setUserData}) {
     e.preventDefault();
     if (input.trim() !== "") {
       
-      const response = await fetch(`http://127.0.0.1:5000/login/${input}`);
+      const response = await fetch(`http://127.0.0.1:8080/login/${input}`);
       const data = await response.json();
       setUserData(data);
       setIsLoggedIn(true);
-      console.log(data);
     }
   }
 
@@ -133,16 +132,34 @@ function UserDataPanel({socket, roomUserData, setRoomId}) {
   )
 }
 
-function OrderBook() {
-  const [orderData, setOrderData] = useState({'bids':[], 'asks':[]});
+function OrderBook({socket, orderData, ownVolume, volume}) {
+  
+  function sendBid(limit) {
+    socket.emit('buy', limit, volume || "0")
+  }
 
-  const rows = Array(100).fill().map((_,i) => 
+  function sendAsk(limit) {
+    socket.emit('sell', limit, volume || "0")
+  }
+  
+  let ownBidVolume = {}
+  let ownAskVolume = {}
+  ownVolume.forEach(e => {
+    if (e.side == 'BUY') {
+      ownBidVolume[Math.floor(e.limit)] = (ownBidVolume[Math.floor(e.limit)] || 0) + e.quantity
+    }
+    else if (e.side == 'SELL') {
+      ownAskVolume[Math.floor(e.limit)] = (ownAskVolume[Math.floor(e.limit)] || 0) + e.quantity
+    }
+  });
+
+  const rows = Array(100).fill().map((_,i) =>
     <tr>
-      <th></th>
-      <th></th>
-      <th>{i}</th>
-      <th></th>
-      <th></th>
+      <td>{ownBidVolume[i] || ""}</td>
+      <td onClick={() => sendBid(i)}>{(orderData.bids[i]==null || orderData.bids[i]==0) ? "" : orderData.bids[i]}</td>
+      <td>{i}</td>
+      <td onClick={() => sendAsk(i)}>{(orderData.asks[i]==null || orderData.asks[i]==0) ? "" : orderData.asks[i]}</td>
+      <td>{ownAskVolume[i] || ""}</td>
     </tr>
   )
 
@@ -246,16 +263,20 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
   const [lastDones, setLastDones] = useState(
     {buy_t:[], buy_p:[], sell_t:[], sell_p:[]}
   );
+  const [orderData, setOrderData] = useState(
+    {
+      bids:{}, 
+      asks:{}
+    });
 
   useEffect(() => {
-    const socketio = io('http://127.0.0.1:5000/');
+    const socketio = io('http://127.0.0.1:8080/');
 
     socketio.on('update_user_data', (data) => {
       setUserData(data);
     })
 
     socketio.on('update_roomuser_data', (data) => {
-      console.log("update from socket", data);
       setRoomUserData(data);
     })
 
@@ -283,12 +304,28 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
       }));
     })
 
+    socketio.on('update_order_book', (data) => {
+      setOrderData(prev => {
+        let d = {...prev}
+        d.bids = {...d.bids}
+        d.asks = {...d.asks}
+        if (data.side) {
+          d.bids[data.limit] = (d.bids[data.limit] || 0) + data.quantity
+        }
+        else {
+          d.asks[data.limit] = (d.asks[data.limit] || 0) + data.quantity
+        }
+        return d;
+      })
+    })
+
     setSocket(socketio);
 
     return () => {
       socketio.off('update_user_data');
       socketio.off('update_bbo_history');
       socketio.off('update_ld_history');
+      socketio.off('update_order_book');
       socketio.disconnect();
     }
   }, []);
@@ -296,15 +333,18 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
   return (
     roomId ? (
       <RoomView socket={socket} roomUserData={roomUserData} bboHistory={bboHistory} 
-      lastDones={lastDones} setRoomId={setRoomId}/>
+      lastDones={lastDones} orderData={orderData} setRoomId={setRoomId}/>
     ) : (
-      <SelectRoomView socket={socket} userData={userData} setIsLoggedIn={setIsLoggedIn} 
-      setRoomId={setRoomId} setRoomUserData={setRoomUserData} setBBOHistory={setBBOHistory} setLastDones={setLastDones}/>
+      <SelectRoomView socket={socket} userData={userData} setIsLoggedIn={setIsLoggedIn} setRoomId={setRoomId} 
+      setRoomUserData={setRoomUserData} setBBOHistory={setBBOHistory} setLastDones={setLastDones} setOrderData={setOrderData}/>
     )
   )
 }
 
-function SelectRoomView({socket, userData, setIsLoggedIn, setRoomId, setRoomUserData, setBBOHistory, setLastDones}) {
+function SelectRoomView({
+    socket, userData, setIsLoggedIn, setRoomId, setRoomUserData, setBBOHistory, setLastDones, setOrderData
+  }) 
+{
   const [createRoomName, setCreateRoomName] = useState('');
   const [joinRoomId, setJoinRoomId] = useState('');
   const [yourRoomSelection, setYourRoomSelection] = useState('');
@@ -314,6 +354,7 @@ function SelectRoomView({socket, userData, setIsLoggedIn, setRoomId, setRoomUser
       setRoomUserData(response.user_data)
       setBBOHistory(response.bbo_history)
       setLastDones(response.ld_history)
+      setOrderData(response.order_book)
       setRoomId(response.room_id)
     })
   }
@@ -380,8 +421,8 @@ function SelectRoomView({socket, userData, setIsLoggedIn, setRoomId, setRoomUser
   )
 }
 
-function RoomView({socket, roomUserData, bboHistory, lastDones, setRoomId}) {
-  
+function RoomView({socket, roomUserData, bboHistory, lastDones, orderData, setRoomId}) {
+  const [quickSendVolume, setQuickSendVolume] = useState(1);
   return (
     <>
     <div className="row">
@@ -399,8 +440,9 @@ function RoomView({socket, roomUserData, bboHistory, lastDones, setRoomId}) {
       </div>
     </div>
     <div className="row">
-      <div className="column">
-        <OrderBook/>
+      <div className="wrapper">
+        <input type="text" value={quickSendVolume} placeholder="Volume" onChange={(e)=>setQuickSendVolume(e.target.value)} />
+        <OrderBook socket={socket} orderData={orderData} ownVolume={roomUserData.orders} volume={quickSendVolume}/>
       </div>
     </div>
     </>

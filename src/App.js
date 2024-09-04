@@ -5,13 +5,13 @@ import { io } from 'socket.io-client';
 
 
 async function requestOrderBook(setOrderData) {
-  const response = await fetch("https://live-order-book-287349709563.us-central1.run.app/order-book");
+  const response = await fetch("https://live-order-book-backend-287349709563.us-central1.run.app/order-book");
   const data = await response.json();
   setOrderData(data);
 }
 
 async function requestRoomUserData(room_id, user_id, setRoomUserData) {
-  const response = await fetch(`https://live-order-book-287349709563.us-central1.run.app/user-data/${room_id}/${user_id}`);
+  const response = await fetch(`https://live-order-book-backend-287349709563.us-central1.run.app/user-data/${room_id}/${user_id}`);
   const data = await response.json();
   setRoomUserData(data);
 }
@@ -23,7 +23,7 @@ function LoginForm({setIsLoggedIn, setUserData}) {
     e.preventDefault();
     if (input.trim() !== "") {
       
-      const response = await fetch(`https://live-order-book-287349709563.us-central1.run.app/login/${input}`);
+      const response = await fetch(`https://live-order-book-backend-287349709563.us-central1.run.app/login/${input}`);
       const data = await response.json();
       setUserData(data);
       setIsLoggedIn(true);
@@ -270,7 +270,7 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
     });
 
   useEffect(() => {
-    const socketio = io('https://live-order-book-287349709563.us-central1.run.app/');
+    const socketio = io('https://live-order-book-backend-287349709563.us-central1.run.app/');
 
     socketio.on('update_user_data', (data) => {
       setUserData(data);

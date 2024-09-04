@@ -10,7 +10,7 @@ steps:
     args:
       - '-c'
       - |
-        gcloud run deploy order-book-front \
+        gcloud run deploy live-order-book-frontend \
           --platform managed \
           --region us-central1 \
           --allow-unauthenticated \

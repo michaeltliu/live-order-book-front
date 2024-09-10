@@ -1,17 +1,23 @@
 import './App.css';
 import {useState, useEffect} from 'react'
-import Plot from 'react-plotly.js'
+import {BuyForm, SellForm, UserDataPanel, OrderBook, PriceHistory} from './RoomComponents.js'
+import About from './about.js'
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Popup from 'reactjs-popup';
+import 'reactjs-popup/dist/index.css';
 import { io } from 'socket.io-client';
 
+const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'
+/* const BACKEND_URL = 'http://127.0.0.1:8080' */
 
 async function requestOrderBook(setOrderData) {
-  const response = await fetch("https://live-order-book-backend-287349709563.us-central1.run.app/order-book");
+  const response = await fetch(`${BACKEND_URL}/order-book`);
   const data = await response.json();
   setOrderData(data);
 }
 
 async function requestRoomUserData(room_id, user_id, setRoomUserData) {
-  const response = await fetch(`https://live-order-book-backend-287349709563.us-central1.run.app/user-data/${room_id}/${user_id}`);
+  const response = await fetch(`${BACKEND_URL}/user-data/${room_id}/${user_id}`);
   const data = await response.json();
   setRoomUserData(data);
 }
@@ -23,7 +29,7 @@ function LoginForm({setIsLoggedIn, setUserData}) {
     e.preventDefault();
     if (input.trim() !== "") {
       
-      const response = await fetch(`https://live-order-book-backend-287349709563.us-central1.run.app/login/${input}`);
+      const response = await fetch(`${BACKEND_URL}/login/${input}`);
       const data = await response.json();
       setUserData(data);
       setIsLoggedIn(true);
@@ -32,222 +38,14 @@ function LoginForm({setIsLoggedIn, setUserData}) {
 
   return (
     <header className="App-header">
+      <Link to="/about">About</Link>
+      <h2>Login</h2>
       <form onSubmit={handleSubmit}>
         <input type="text" value={input} placeholder="Username" onChange={(e)=>setInput(e.target.value)}>
         </input>
         <button type="submit">Submit</button>
       </form>
     </header>
-  )
-}
-
-function BuyForm({socket}) {
-  const [limitInput, setLimitInput] = useState('');
-  const [quantityInput, setQuantityInput] = useState('');
-  const [message, setMessage] = useState('');
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (limitInput.trim() !== "" && quantityInput.trim() !== "") {
-      socket.emit('buy', limitInput, quantityInput, response => {
-        setMessage(response);
-      })
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <input type="text" value={limitInput} name="limit" 
-        placeholder="Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
-        <input type="text" value={quantityInput} name="quantity" 
-        placeholder="Quantity" onChange={(e)=>setQuantityInput(e.target.value)} /><br/>
-        <button type="submit">Buy</button>
-      </form>
-      {message}
-    </>
-  )
-}
-
-function SellForm({socket}) {
-  const [limitInput, setLimitInput] = useState('');
-  const [quantityInput, setQuantityInput] = useState('');
-  const [message, setMessage] = useState('');
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (limitInput.trim() !== "" && quantityInput.trim() !== "") {
-      socket.emit('sell', limitInput, quantityInput, response => {
-        setMessage(response);
-      })
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <input type="text" value={limitInput} name="limit" 
-        placeholder="Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
-        <input type="text" value={quantityInput} name="quantity" 
-        placeholder="Quantity" onChange={(e)=>setQuantityInput(e.target.value)} /><br/>
-        <button type="submit">Sell</button>
-      </form>
-      {message}
-    </>
-  )
-}
-
-function UserDataPanel({socket, roomUserData, setRoomId}) {
-
-  function handleDeleteOrder(order_id) {
-    socket.emit('delete', order_id);
-  }
-
-  function handleExit() {
-    socket.emit('exit-room');
-    setRoomId('');
-  }
-
-  const orderList = roomUserData.orders.map(order => 
-    <p>
-      {order.order_id}: {order.side} {order.quantity} @ {order.limit} 
-      <button onClick={() => handleDeleteOrder(order.order_id)}>Delete Order</button>
-    </p>
-  );
-
-  const tradeList = roomUserData.trades.map(trade => 
-    <p>{trade.buyer_name} {trade.seller_name} {trade.volume} LOTS @ {trade.price}</p>
-  );
-
-  return (
-    <>
-      <p>Username: {roomUserData.username}</p>
-      <p>User ID: {roomUserData.user_id}</p>
-      <p>Cash: {roomUserData.cash}</p>
-      <p>Position: {roomUserData.position}</p>
-      Orders: <ul>{orderList}</ul>
-      Trades: <ul>{tradeList}</ul>
-      <button onClick={() => handleExit()}>Exit Room</button>
-    </>
-  )
-}
-
-function OrderBook({socket, orderData, ownVolume, volume}) {
-  
-  function sendBid(limit) {
-    socket.emit('buy', limit, volume || "0")
-  }
-
-  function sendAsk(limit) {
-    socket.emit('sell', limit, volume || "0")
-  }
-  
-  let ownBidVolume = {}
-  let ownAskVolume = {}
-  ownVolume.forEach(e => {
-    if (e.side == 'BUY') {
-      ownBidVolume[Math.floor(e.limit)] = (ownBidVolume[Math.floor(e.limit)] || 0) + e.quantity
-    }
-    else if (e.side == 'SELL') {
-      ownAskVolume[Math.floor(e.limit)] = (ownAskVolume[Math.floor(e.limit)] || 0) + e.quantity
-    }
-  });
-
-  const rows = Array(100).fill().map((_,i) =>
-    <tr>
-      <td>{ownBidVolume[i] || ""}</td>
-      <td onClick={() => sendBid(i)}>{(orderData.bids[i]==null || orderData.bids[i]==0) ? "" : orderData.bids[i]}</td>
-      <td>{i}</td>
-      <td onClick={() => sendAsk(i)}>{(orderData.asks[i]==null || orderData.asks[i]==0) ? "" : orderData.asks[i]}</td>
-      <td>{ownAskVolume[i] || ""}</td>
-    </tr>
-  )
-
-  return (
-    <table>
-      <thead>
-        <tr>
-          <th>Own Bid</th>
-          <th>Bid Volume</th>
-          <th>Price</th>
-          <th>Ask Volume</th>
-          <th>Own Ask</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows}
-      </tbody>
-    </table>
-  )
-}
-
-function PriceHistory({bboHistory, lastDones}) {
-  
-  return (
-    <Plot 
-      data={[
-        {
-          x: lastDones.buy_t.map((d) => new Date(d)),
-          y: lastDones.buy_p,
-          type: 'scatter',
-          mode: 'markers',
-          marker: {color: 'green', symbol: 'triangle-up', size: 9},
-          name: 'Last done buy aggressor',
-        },
-        {
-          x: lastDones.sell_t.map((d) => new Date(d)),
-          y: lastDones.sell_p,
-          type: 'scatter',
-          mode: 'markers',
-          marker: {color: 'red', symbol: 'triangle-down', size: 9},
-          name: 'Last done sell aggressor'
-        },
-        {
-          x: bboHistory.bb_t.map((d) => new Date(d)),
-          y: bboHistory.bb_p,
-          type: 'scatter',
-          mode: 'markers',
-          marker: {color: 'purple'},
-          name: 'Best bid'
-        },
-        {
-          x: bboHistory.bo_t.map((d) => new Date(d)),
-          y: bboHistory.bo_p,
-          type: 'scatter',
-          mode: 'markers',
-          marker: {color: 'purple'},
-          name: 'Best offer'
-        },
-        {
-          x: bboHistory.bt.map((d) => new Date(d)),
-          y: bboHistory.bp,
-          type: 'scatter',
-          mode: 'lines',
-          marker: {color: 'purple'},
-          showlegend: false,
-          hoverinfo: 'skip'
-        },
-        {
-          x: bboHistory.ot.map((d) => new Date(d)),
-          y: bboHistory.op,
-          type: 'scatter',
-          mode: 'lines',
-          marker: {color: 'purple'},
-          showlegend: false,
-          hoverinfo: 'skip'
-        }
-      ]}
-      layout={{
-        title: 'Price History',
-        uirevision: true,
-        xaxis: {
-          title: 'Time'
-        },
-        yaxis: {
-          title: 'Price'
-        }
-      }}
-    />
   )
 }
 
@@ -268,9 +66,12 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
       bids:{}, 
       asks:{}
     });
+    const [gameInfo, setGameInfo] = useState(
+
+    )
 
   useEffect(() => {
-    const socketio = io('https://live-order-book-backend-287349709563.us-central1.run.app/');
+    const socketio = io(BACKEND_URL);
 
     socketio.on('update_user_data', (data) => {
       setUserData(data);
@@ -368,14 +169,14 @@ function SelectRoomView({
 
   function joinRoomSubmit(e) {
     e.preventDefault();
-    if (joinRoomId.trim() !== "") {
+    if (joinRoomId.trim() !== '') {
       joinRoom(joinRoomId);
     }
   }
   
   function createRoomSubmit(e) {
     e.preventDefault();
-    if (createRoomName.trim() !== "") {
+    if (createRoomName.trim() !== '') {
       socket.emit('create-room', createRoomName, response => {
         joinRoom(response);
       });
@@ -449,7 +250,7 @@ function RoomView({socket, roomUserData, bboHistory, lastDones, orderData, setRo
   )
 }
 
-function App() {
+function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(''); /* {user_id, rooms} */
 
@@ -463,6 +264,17 @@ function App() {
         )
       }
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+    </Router>
   );
 }
 

@@ -13,6 +13,11 @@ div.wrapper {
   width: 30%;
 }
 
+div.margin {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
 th, td {
   border: 1px solid black;
 }
@@ -28,7 +33,7 @@ ul {
 .column {
   float: left;
   width: 33.33%;
-  background-color: #263146;
+  background-color: #334b68;
   color: white;
 }
 
@@ -46,7 +51,7 @@ ul {
 }
 
 .App-header {
-  background-color: #263146;
+  background-color: #99bbe4;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

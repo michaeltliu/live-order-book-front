@@ -1,8 +1,10 @@
 import './App.css';
+import {Link} from 'react-router-dom';
 
 function About() {
     return (
         <div className="margin">
+            <Link to="/">Login</Link>
             <h1>About LiveOrderBook.xyz</h1>
             <p>
                 LiveOrderBook is built as a platform for betting on real-world events against friends. 
@@ -25,14 +27,14 @@ function About() {
                 settles in dollars to the number of regular season games they win.
             </p>
             <h2>Roadmap &amp; Known Bugs</h2>
-            <li>Implementing persistent database storage is currently a top priority</li>
-            <li>Add a popup box with stats for all the users in a room</li>
+            <li>Implementing persistent database storage is a top priority</li>
+            <li>Adding a popup box with stats for all the users in a room</li>
             <li>Front end UI and UX</li>
-            <li>Adding actual login and password authentication</li>
             <li>Handling inactive sessions and reconnects</li>
-            <p>~mliu</p>
+            <li>Price history plot does not work on mobile</li>
+            <p>~ ML</p>
             <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScy2ES7_4yuIXgXcxEG6SYfObsCP-ozWbd1cbmUmgY9H6LK7Q/viewform?embedded=true" 
-            width="640" height="750" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+            width="520" height="750" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
         </div>
     )
 }

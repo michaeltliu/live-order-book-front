@@ -8,7 +8,7 @@ import 'reactjs-popup/dist/index.css';
 import { io } from 'socket.io-client';
 
 const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'
-/* const BACKEND_URL = 'http://127.0.0.1:8080' */
+/*const BACKEND_URL = 'http://127.0.0.1:8080'*/
 
 async function requestOrderBook(setOrderData) {
   const response = await fetch(`${BACKEND_URL}/order-book`);
@@ -23,16 +23,27 @@ async function requestRoomUserData(room_id, user_id, setRoomUserData) {
 }
 
 function LoginForm({setIsLoggedIn, setUserData}) {
-  const [input, setInput] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginMessage, setLoginMessage] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (input.trim() !== "") {
+    if (username.trim() !== '' && password.trim() !== '') {
       
-      const response = await fetch(`${BACKEND_URL}/login/${input}`);
+      const response = await fetch(`${BACKEND_URL}/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: username, password: password})
+      });
       const data = await response.json();
-      setUserData(data);
-      setIsLoggedIn(true);
+      if (data.success) {
+        setUserData(data);
+        setIsLoggedIn(true);
+      }
+      else {
+        setLoginMessage('Wrong password');
+      }
     }
   }
 
@@ -40,11 +51,14 @@ function LoginForm({setIsLoggedIn, setUserData}) {
     <header className="App-header">
       <Link to="/about">About</Link>
       <h2>Login</h2>
+      <p>If the username is found, you will be logged in. 
+        Otherwise, a new account will be created.</p> 
       <form onSubmit={handleSubmit}>
-        <input type="text" value={input} placeholder="Username" onChange={(e)=>setInput(e.target.value)}>
-        </input>
+        <input type="text" value={username} placeholder="Username" onChange={(e)=>setUsername(e.target.value)}/><br/>
+        <input type="password" value={password} placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/><br/>
         <button type="submit">Submit</button>
       </form>
+      {loginMessage}
     </header>
   )
 }

@@ -113,7 +113,9 @@ export function OrderBook({socket, orderData, ownVolume, volume}) {
     }
   });
 
-  const rows = Array(100).fill().map((_,i) =>
+  const rows = Array(100).fill().map((_,ind) => { 
+    let i = 99 - ind;
+    return (
     <tr>
       <td>{ownBidVolume[i] || ""}</td>
       <td onClick={() => sendBid(i)}>{(orderData.bids[i]==null || orderData.bids[i]==0) ? "" : orderData.bids[i]}</td>
@@ -121,6 +123,8 @@ export function OrderBook({socket, orderData, ownVolume, volume}) {
       <td onClick={() => sendAsk(i)}>{(orderData.asks[i]==null || orderData.asks[i]==0) ? "" : orderData.asks[i]}</td>
       <td>{ownAskVolume[i] || ""}</td>
     </tr>
+    )
+  }
   )
 
   return (

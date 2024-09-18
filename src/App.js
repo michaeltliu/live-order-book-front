@@ -1,7 +1,7 @@
 import './App.css';
 import {useState, useEffect} from 'react'
 import {BuyForm, SellForm, UserDataPanel, OrderBook, PriceHistory} from './RoomComponents.js'
-import About from './About.js'
+import About from './about.js'
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';

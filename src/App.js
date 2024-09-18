@@ -7,8 +7,8 @@ import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import { io } from 'socket.io-client';
 
-/*const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'*/
-const BACKEND_URL = 'http://127.0.0.1:8080'
+const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'
+/*const BACKEND_URL = 'http://127.0.0.1:8080'*/
 
 function LoginForm({setIsLoggedIn, setUserData}) {
   const [username, setUsername] = useState('');

@@ -1,5 +1,6 @@
 import {useState} from 'react'
 import Plot from 'react-plotly.js'
+import * as util from './util.js'
 
 export function BuyForm({socket}) {
   const [limitInput, setLimitInput] = useState('');
@@ -57,26 +58,21 @@ export function SellForm({socket}) {
   )
 }
 
-export function UserDataPanel({socket, roomUserData, setRoomId}) {
+export function UserDataPanel({socket, roomUserData}) {
 
-  function handleDeleteOrder(order_id) {
-    socket.emit('delete', order_id);
-  }
-
-  function handleExit() {
-    socket.emit('exit-room');
-    setRoomId('');
+  function handleDeleteOrder(side, order_id) {
+    socket.emit('delete', side, order_id);
   }
 
   const orderList = roomUserData.orders.map(order => 
     <p>
-      {order.order_id}: {order.side} {order.quantity} @ {order.limit} 
-      <button onClick={() => handleDeleteOrder(order.order_id)}>Delete Order</button>
+      {order.creation_time}: {order.side} {order.quantity} @ {order.limit_price} 
+      <button onClick={() => handleDeleteOrder(order.side, order.id)}>Delete Order</button>
     </p>
   );
 
   const tradeList = roomUserData.trades.map(trade => 
-    <p>{trade.buyer_name} {trade.seller_name} {trade.volume} LOTS @ {trade.price}</p>
+    <p>{trade.buyer_id} {trade.seller_id} {trade.volume} LOTS @ {trade.price}</p>
   );
 
   return (
@@ -87,7 +83,6 @@ export function UserDataPanel({socket, roomUserData, setRoomId}) {
       <p>Position: {roomUserData.position}</p>
       Orders: <ul>{orderList}</ul>
       Trades: <ul>{tradeList}</ul>
-      <button onClick={() => handleExit()}>Exit Room</button>
     </>
   )
 }
@@ -105,11 +100,11 @@ export function OrderBook({socket, orderData, ownVolume, volume}) {
   let ownBidVolume = {}
   let ownAskVolume = {}
   ownVolume.forEach(e => {
-    if (e.side == 'BUY') {
-      ownBidVolume[Math.floor(e.limit)] = (ownBidVolume[Math.floor(e.limit)] || 0) + e.quantity
+    if (e.side == 'B') {
+      ownBidVolume[Math.floor(e.limit_price)] = (ownBidVolume[Math.floor(e.limit_price)] || 0) + e.quantity
     }
-    else if (e.side == 'SELL') {
-      ownAskVolume[Math.floor(e.limit)] = (ownAskVolume[Math.floor(e.limit)] || 0) + e.quantity
+    else if (e.side == 'S') {
+      ownAskVolume[Math.floor(e.limit_price)] = (ownAskVolume[Math.floor(e.limit_price)] || 0) + e.quantity
     }
   });
 
@@ -146,45 +141,49 @@ export function OrderBook({socket, orderData, ownVolume, volume}) {
 }
 
 export function PriceHistory({bboHistory, lastDones}) {
-  
+  console.log(bboHistory);
+  const ld = util.reduceLastDones(lastDones);
+  const bbo = util.reduceBBOHistory(bboHistory);
+  const line_t = util.repeatElements(bbo.t)
+
   return (
     <Plot 
       data={[
         {
-          x: lastDones.buy_t.map((d) => new Date(d)),
-          y: lastDones.buy_p,
+          x: ld.buy_t,
+          y: ld.buy_p,
           type: 'scatter',
           mode: 'markers',
           marker: {color: 'green', symbol: 'triangle-up', size: 9},
           name: 'Last done buy aggressor',
         },
         {
-          x: lastDones.sell_t.map((d) => new Date(d)),
-          y: lastDones.sell_p,
+          x: ld.sell_t,
+          y: ld.sell_p,
           type: 'scatter',
           mode: 'markers',
           marker: {color: 'red', symbol: 'triangle-down', size: 9},
           name: 'Last done sell aggressor'
         },
         {
-          x: bboHistory.bb_t.map((d) => new Date(d)),
-          y: bboHistory.bb_p,
+          x: bbo.t,
+          y: bbo.bp,
           type: 'scatter',
           mode: 'markers',
           marker: {color: 'purple'},
           name: 'Best bid'
         },
         {
-          x: bboHistory.bo_t.map((d) => new Date(d)),
-          y: bboHistory.bo_p,
+          x: bbo.t,
+          y: bbo.op,
           type: 'scatter',
           mode: 'markers',
           marker: {color: 'purple'},
           name: 'Best offer'
         },
         {
-          x: bboHistory.bt.map((d) => new Date(d)),
-          y: bboHistory.bp,
+          x: line_t.slice(1),
+          y: util.repeatElements(bbo.bp).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
           marker: {color: 'purple'},
@@ -192,8 +191,8 @@ export function PriceHistory({bboHistory, lastDones}) {
           hoverinfo: 'skip'
         },
         {
-          x: bboHistory.ot.map((d) => new Date(d)),
-          y: bboHistory.op,
+          x: line_t.slice(1),
+          y: util.repeatElements(bbo.op).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
           marker: {color: 'purple'},

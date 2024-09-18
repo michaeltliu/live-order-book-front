@@ -14,24 +14,25 @@ function About() {
                 and sportsbooks. With no preset limitations or restrictions, every order book is a blank slate,
                 giving you full control over the contracts you create and trade. To get started, create a room 
                 and invite your friends. Submit orders, track market activity, and view price history all from the app. 
-                Perfect for those who enjoy competitive forecasting in a dynamic, fair marketplace!
+                Perfect for those who enjoy forecasting in a dynamic, fair marketplace!
             </p>
             <h3>Example Room 1</h3>
             <p>
-                You and your friends want to bet on the upcoming presidential election. Create a contract that settles
+                To bet on the upcoming presidential election, create a contract that settles
                 to $1 if Kamala Harris is elected and $0 if Donald Trump is elected.
             </p>
             <h3>Example Room 2</h3>
             <p>
-                You and your friends want to bet on how the Dallas Cowboys perform this season. Create a contract that
+                To bet on how the Dallas Cowboys perform this season, create a contract that
                 settles in dollars to the number of regular season games they win.
             </p>
             <h2>Roadmap &amp; Known Bugs</h2>
-            <li>Implementing persistent database storage is a top priority</li>
-            <li>Adding a popup box with stats for all the users in a room</li>
-            <li>Front end UI and UX</li>
+            <li>Popup box with stats for all the users in a room</li>
+            <li>Configurable room setings</li>
+            <li>Front end UI/UX, especially on mobile</li>
             <li>Handling inactive sessions and reconnects</li>
-            <li>Price history plot does not work on mobile</li>
+            <li>There may be a slight delay when joining a room after a period of server inactivity. 
+                Please be patient and try pressing the join button a few times if it doesn't respond immediately.</li>
             <p>~ ML</p>
             <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScy2ES7_4yuIXgXcxEG6SYfObsCP-ozWbd1cbmUmgY9H6LK7Q/viewform?embedded=true" 
             width="520" height="750" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>

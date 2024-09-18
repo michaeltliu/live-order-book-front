@@ -1,26 +1,14 @@
 import './App.css';
 import {useState, useEffect} from 'react'
 import {BuyForm, SellForm, UserDataPanel, OrderBook, PriceHistory} from './RoomComponents.js'
-import About from './about.js'
+import About from './About.js'
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import { io } from 'socket.io-client';
 
-const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'
-/*const BACKEND_URL = 'http://127.0.0.1:8080'*/
-
-async function requestOrderBook(setOrderData) {
-  const response = await fetch(`${BACKEND_URL}/order-book`);
-  const data = await response.json();
-  setOrderData(data);
-}
-
-async function requestRoomUserData(room_id, user_id, setRoomUserData) {
-  const response = await fetch(`${BACKEND_URL}/user-data/${room_id}/${user_id}`);
-  const data = await response.json();
-  setRoomUserData(data);
-}
+/*const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'*/
+const BACKEND_URL = 'http://127.0.0.1:8080'
 
 function LoginForm({setIsLoggedIn, setUserData}) {
   const [username, setUsername] = useState('');
@@ -37,12 +25,14 @@ function LoginForm({setIsLoggedIn, setUserData}) {
         body: JSON.stringify({username: username, password: password})
       });
       const data = await response.json();
-      if (data.success) {
+      
+      if (data.status) {
+        console.log(data);
         setUserData(data);
         setIsLoggedIn(true);
       }
       else {
-        setLoginMessage('Wrong password');
+        setLoginMessage('Username taken / Wrong password');
       }
     }
   }
@@ -51,8 +41,7 @@ function LoginForm({setIsLoggedIn, setUserData}) {
     <header className="App-header">
       <Link to="/about">About</Link>
       <h2>Login</h2>
-      <p>If the username is found, you will be logged in. 
-        Otherwise, a new account will be created.</p> 
+      <p>If the username is found, you will be logged in. Otherwise, a new account will be created.</p> 
       <form onSubmit={handleSubmit}>
         <input type="text" value={username} placeholder="Username" onChange={(e)=>setUsername(e.target.value)}/><br/>
         <input type="password" value={password} placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/><br/>
@@ -67,25 +56,13 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
   const [socket, setSocket] = useState(null);
   const [roomId, setRoomId] = useState('');
   const [roomUserData, setRoomUserData] = useState('');
-  const [bboHistory, setBBOHistory] = useState(
-    {
-      bb_t:[], bb_p:[], bo_t:[], bo_p:[], /* Actual data points */
-      bt:[], bp:[], ot:[], op:[], /* Contains extra points to aid graphing */
-    });
-  const [lastDones, setLastDones] = useState(
-    {buy_t:[], buy_p:[], sell_t:[], sell_p:[]}
-  );
-  const [orderData, setOrderData] = useState(
-    {
-      bids:{}, 
-      asks:{}
-    });
-    const [gameInfo, setGameInfo] = useState(
-
-    )
+  const [bboHistory, setBBOHistory] = useState([]);
+  const [lastDones, setLastDones] = useState([]);
+  const [orderData, setOrderData] = useState({ bids: {}, asks: {} });
+  const [gameInfo, setGameInfo] = useState();
 
   useEffect(() => {
-    const socketio = io(BACKEND_URL);
+    const socketio = io(BACKEND_URL, {auth: {token: userData.token, profile_id: userData.profile_id}});
 
     socketio.on('update_user_data', (data) => {
       setUserData(data);
@@ -96,27 +73,11 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
     })
 
     socketio.on('update_bbo_history', (data) => {
-      setBBOHistory(prev => {
-        return {
-          bb_t: prev.bb_t.concat(data.bb_t),
-          bb_p: prev.bb_p.concat(data.bb_p),
-          bo_t: prev.bo_t.concat(data.bo_t),
-          bo_p: prev.bo_p.concat(data.bo_p),
-          bt: prev.bt.concat(data.bt),
-          bp: prev.bp.concat(data.bp),
-          ot: prev.ot.concat(data.ot),
-          op: prev.op.concat(data.op),
-        };
-      });
+      setBBOHistory(prev => [...prev, data]);
     })
 
     socketio.on('update_ld_history', (data) => {
-      setLastDones(prev => ({
-        buy_t:[...prev.buy_t, ...data.buy_t],
-        buy_p:[...prev.buy_p, ...data.buy_p],
-        sell_t:[...prev.sell_t, ...data.sell_t],
-        sell_p:[...prev.sell_p, ...data.sell_p]
-      }));
+      setLastDones(prev => [...prev, data]);
     })
 
     socketio.on('update_order_book', (data) => {
@@ -164,8 +125,8 @@ function SelectRoomView({
   const [joinRoomId, setJoinRoomId] = useState('');
   const [yourRoomSelection, setYourRoomSelection] = useState('');
 
-  function joinRoom(room_id) {
-    socket.emit('join-room', room_id, userData.user_id, response => {
+  function joinRoom(join_code) {
+    socket.emit('join-room', join_code, response => {
       setRoomUserData(response.user_data)
       setBBOHistory(response.bbo_history)
       setLastDones(response.ld_history)
@@ -198,8 +159,8 @@ function SelectRoomView({
   } 
 
   const yourRoomsList = userData.rooms.map(room => 
-    <option value={room}>
-      {room}
+    <option value={room.join_code}>
+      {room.join_code}: {room.room_name}
     </option>
   )
   return (
@@ -238,11 +199,18 @@ function SelectRoomView({
 
 function RoomView({socket, roomUserData, bboHistory, lastDones, orderData, setRoomId}) {
   const [quickSendVolume, setQuickSendVolume] = useState(1);
+
+  function handleExit() {
+    socket.emit('exit-room');
+    setRoomId('');
+  }
+
   return (
     <>
     <div className="row">
       <div className="column">
-        <UserDataPanel socket={socket} roomUserData={roomUserData} setRoomId={setRoomId} />
+        <UserDataPanel socket={socket} roomUserData={roomUserData} />
+        <button onClick={() => handleExit()}>Exit Room</button>
       </div>
       <div className="column">
         <BuyForm socket={socket} />
@@ -266,7 +234,7 @@ function RoomView({socket, roomUserData, bboHistory, lastDones, orderData, setRo
 
 function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState(''); /* {user_id, rooms} */
+  const [userData, setUserData] = useState(''); /* {status, profile_id, token, rooms={join_code, room_name, creation_time}} */
 
   return (
     <div className="App">

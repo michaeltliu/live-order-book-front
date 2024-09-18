@@ -95,6 +95,10 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
       })
     })
 
+    socketio.on('disconnect', (reason) => {
+      console.log('Disconnected:', reason);
+    })
+
     setSocket(socketio);
 
     return () => {

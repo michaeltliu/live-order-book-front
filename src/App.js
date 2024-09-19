@@ -9,6 +9,7 @@ import { io } from 'socket.io-client';
 
 /*const BACKEND_URL = process.env.REACT_APP_MODE === 'PROD' ? 'https://live-order-book-backend-287349709563.us-central1.run.app' : 'http://127.0.0.1:8080';*/
 const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app';
+/*const BACKEND_URL = 'http://127.0.0.1:8080';*/
 
 function LoginForm({setIsLoggedIn, setUserData}) {
   const [username, setUsername] = useState('');
@@ -62,7 +63,7 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
   const [gameInfo, setGameInfo] = useState();
 
   useEffect(() => {
-    const socketio = io(BACKEND_URL, {auth: {token: userData.token, profile_id: userData.profile_id}});
+    const socketio = io(BACKEND_URL, {transports: ['websocket'], auth: {token: userData.token, profile_id: userData.profile_id}});
 
     socketio.on('update_user_data', (data) => {
       setUserData(data);
@@ -93,13 +94,6 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
         }
         return d;
       })
-    })
-
-    socketio.on('disconnect', (reason, details) => {
-      console.log('Disconnected', reason);
-      console.log(details.message);
-      console.log(details.description);
-      console.log(details.context);
     })
 
     setSocket(socketio);

@@ -7,8 +7,13 @@ import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import { io } from 'socket.io-client';
 
-const BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'
-/*const BACKEND_URL = 'http://127.0.0.1:8080'*/
+let BACKEND_URL = '';
+if (process.env.MODE == 'PROD') {
+  BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'
+}
+else {
+  BACKEND_URL = 'http://127.0.0.1:8080'
+}
 
 function LoginForm({setIsLoggedIn, setUserData}) {
   const [username, setUsername] = useState('');
@@ -95,8 +100,11 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
       })
     })
 
-    socketio.on('disconnect', (reason) => {
-      console.log('Disconnected:', reason);
+    socketio.on('disconnect', (reason, details) => {
+      console.log('Disconnected', reason);
+      console.log(details.message);
+      console.log(details.description);
+      console.log(details.context);
     })
 
     setSocket(socketio);

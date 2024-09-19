@@ -7,13 +7,7 @@ import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import { io } from 'socket.io-client';
 
-let BACKEND_URL = '';
-if (process.env.MODE == 'PROD') {
-  BACKEND_URL = 'https://live-order-book-backend-287349709563.us-central1.run.app'
-}
-else {
-  BACKEND_URL = 'http://127.0.0.1:8080'
-}
+const BACKEND_URL = process.env.REACT_APP_MODE == 'PROD' ? 'https://live-order-book-backend-287349709563.us-central1.run.app' : 'http://127.0.0.1:8080/';
 
 function LoginForm({setIsLoggedIn, setUserData}) {
   const [username, setUsername] = useState('');

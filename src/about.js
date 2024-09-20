@@ -1,10 +1,8 @@
 import './App.css';
-import {Link} from 'react-router-dom';
 
 function About() {
     return (
-        <div className="margin">
-            <Link to="/">Login</Link>
+        <div>
             <h1>About LiveOrderBook.xyz</h1>
             <p>
                 LiveOrderBook is built as a platform for betting on real-world events against friends. 
@@ -31,11 +29,9 @@ function About() {
             <li>Configurable room setings</li>
             <li>Front end UI/UX, especially on mobile</li>
             <li>Handling inactive sessions and reconnects</li>
-            <li>There may be a slight delay when joining a room after a period of server inactivity. 
-                Please be patient and try pressing the join button a few times if it doesn't respond immediately.</li>
             <p>~ ML</p>
             <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScy2ES7_4yuIXgXcxEG6SYfObsCP-ozWbd1cbmUmgY9H6LK7Q/viewform?embedded=true" 
-            width="520" height="750" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+            width="450" height="750" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
         </div>
     )
 }

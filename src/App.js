@@ -1,6 +1,8 @@
 import './App.css';
 import {useState, useEffect} from 'react'
 import {BuyForm, SellForm, UserDataPanel, OrderBook, PriceHistory} from './RoomComponents.js'
+import { ThemeProvider, ThemeButton } from './ThemeContext.js';
+import Navbar from './Navbar.js'
 import About from './about.js'
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Popup from 'reactjs-popup';
@@ -39,8 +41,7 @@ function LoginForm({setIsLoggedIn, setUserData}) {
   }
 
   return (
-    <header className="App-header">
-      <Link to="/about">About</Link>
+    <div>
       <h2>Login</h2>
       <p>If the username is found, you will be logged in. Otherwise, a new account will be created.</p> 
       <form onSubmit={handleSubmit}>
@@ -49,7 +50,7 @@ function LoginForm({setIsLoggedIn, setUserData}) {
         <button type="submit">Submit</button>
       </form>
       {loginMessage}
-    </header>
+    </div>
   )
 }
 
@@ -63,7 +64,10 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
   const [gameInfo, setGameInfo] = useState();
 
   useEffect(() => {
-    const socketio = io(BACKEND_URL, {transports: ['websocket'], auth: {token: userData.token, profile_id: userData.profile_id}});
+    const socketio = io(BACKEND_URL, {
+        transports: ['websocket'], 
+        auth: {token: userData.token, profile_id: userData.profile_id}
+      });
 
     socketio.on('update_user_data', (data) => {
       setUserData(data);
@@ -165,41 +169,34 @@ function SelectRoomView({
     </option>
   )
   return (
-    <div className="row">
-      <div className="column">
-        <h3>Create room</h3>
-        <form onSubmit={createRoomSubmit}>
-          <input type="text" value={createRoomName} 
-          placeholder="Room Name" onChange={(e)=>setCreateRoomName(e.target.value)} /> <br></br>
-          <button type="submit">Go!</button>
-        </form>
-      </div>
-      <div className="column">
-        <h3>Join room</h3>
-        <form onSubmit={joinRoomSubmit}>
-          <input type="text" value={joinRoomId} 
-          placeholder="Room ID" onChange={(e)=>setJoinRoomId(e.target.value)} /> <br></br>
-          <button type="submit">Go!</button>
-        </form>
-      </div>
-      <div className="column">
-        <h3>Your rooms</h3>
-        <button onClick={() => setIsLoggedIn(false)}>Logout</button>
-        <form onSubmit={yourRoomsSubmit}>
-          <label>Select a room:</label>
-          <select value={yourRoomSelection} onChange={(e)=>setYourRoomSelection(e.target.value)}>
-            <option value=""></option>
-            {yourRoomsList}
-          </select> <br></br>
-          <button type="submit">Go!</button>
-        </form>
-      </div>
+    <div className="container1col">
+      <button style={{width:'12%', minWidth:'85px', float: 'right'}} onClick={() => setIsLoggedIn(false)}>Logout</button>
+      <h2>Create room</h2>
+      <form onSubmit={createRoomSubmit}>
+        <input type="text" value={createRoomName} 
+        placeholder="Room Name" onChange={(e)=>setCreateRoomName(e.target.value)} />
+        <button type="submit">Go!</button>
+      </form>
+      <h2>Join room</h2>
+      <form onSubmit={joinRoomSubmit}>
+        <input type="text" value={joinRoomId} 
+        placeholder="Room ID" onChange={(e)=>setJoinRoomId(e.target.value)} />
+        <button type="submit">Go!</button>
+      </form>
+      <h2>Your rooms</h2>
+      <form onSubmit={yourRoomsSubmit}>
+        <select value={yourRoomSelection} onChange={(e)=>setYourRoomSelection(e.target.value)}>
+          <option value="" selected disabled>Select a room</option>
+          {yourRoomsList}
+        </select>
+        <button type="submit">Go!</button>
+      </form>
     </div>
   )
 }
 
 function RoomView({socket, roomUserData, bboHistory, lastDones, orderData, setRoomId}) {
-  const [quickSendVolume, setQuickSendVolume] = useState(1);
+  const [isPriceHistoryOpen, setIsPriceHistoryOpen] = useState(false);
 
   function handleExit() {
     socket.emit('exit-room');
@@ -207,38 +204,25 @@ function RoomView({socket, roomUserData, bboHistory, lastDones, orderData, setRo
   }
 
   return (
-    <>
-    <div className="row">
-      <div className="column">
-        <UserDataPanel socket={socket} roomUserData={roomUserData} />
-        <button onClick={() => handleExit()}>Exit Room</button>
-      </div>
-      <div className="column">
+    <div className="container2col">
+      <UserDataPanel socket={socket} roomUserData={roomUserData} />
+      <div>
         <BuyForm socket={socket} />
-        <br></br>
         <SellForm socket={socket} />
-        <br></br>
-        <PriceHistory bboHistory={bboHistory} lastDones={lastDones}/>
       </div>
-      <div className="column">
-      </div>
+      <PriceHistory bboHistory={bboHistory} lastDones={lastDones}/>
+      <OrderBook socket={socket} orderData={orderData} ownVolume={roomUserData.orders}/>
+      <button onClick={() => handleExit()}>Exit Room</button>
     </div>
-    <div className="row">
-      <div className="wrapper">
-        <input type="text" value={quickSendVolume} placeholder="Volume" onChange={(e)=>setQuickSendVolume(e.target.value)} />
-        <OrderBook socket={socket} orderData={orderData} ownVolume={roomUserData.orders} volume={quickSendVolume}/>
-      </div>
-    </div>
-    </>
   )
 }
 
 function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(''); /* {status, profile_id, token, rooms={join_code, room_name, creation_time}} */
-
+  
   return (
-    <div className="App">
+    <div className='App'>
       {
         isLoggedIn ? (
           <LoggedInView setIsLoggedIn={setIsLoggedIn} setUserData={setUserData} userData={userData}/>
@@ -251,13 +235,17 @@ function Home() {
 }
 
 function App() {
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Navbar/>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

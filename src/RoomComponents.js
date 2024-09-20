@@ -1,4 +1,5 @@
-import {useState} from 'react'
+import {useState, useContext} from 'react'
+import {ThemeContext} from './ThemeContext.js'
 import Plot from 'react-plotly.js'
 import * as util from './util.js'
 
@@ -23,7 +24,7 @@ export function BuyForm({socket}) {
         placeholder="Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
         <input type="text" value={quantityInput} name="quantity" 
         placeholder="Quantity" onChange={(e)=>setQuantityInput(e.target.value)} /><br/>
-        <button type="submit">Buy</button>
+        <button class="buy" type="submit">Buy</button>
       </form>
       {message}
     </>
@@ -51,7 +52,7 @@ export function SellForm({socket}) {
         placeholder="Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
         <input type="text" value={quantityInput} name="quantity" 
         placeholder="Quantity" onChange={(e)=>setQuantityInput(e.target.value)} /><br/>
-        <button type="submit">Sell</button>
+        <button class="sell" type="submit">Sell</button>
       </form>
       {message}
     </>
@@ -76,25 +77,26 @@ export function UserDataPanel({socket, roomUserData}) {
   );
 
   return (
-    <>
+    <div>
       <p>Username: {roomUserData.username}</p>
       <p>User ID: {roomUserData.user_id}</p>
       <p>Cash: {roomUserData.cash}</p>
       <p>Position: {roomUserData.position}</p>
-      Orders: <ul>{orderList}</ul>
-      Trades: <ul>{tradeList}</ul>
-    </>
+      <p>Orders: </p><ul>{orderList}</ul>
+      <p>Trades: </p><ul>{tradeList}</ul>
+    </div>
   )
 }
 
-export function OrderBook({socket, orderData, ownVolume, volume}) {
+export function OrderBook({socket, orderData, ownVolume}) {
+  const [quickSendVolume, setQuickSendVolume] = useState(1);
   
   function sendBid(limit) {
-    socket.emit('buy', limit, volume || "0")
+    socket.emit('buy', limit, quickSendVolume || "0")
   }
 
   function sendAsk(limit) {
-    socket.emit('sell', limit, volume || "0")
+    socket.emit('sell', limit, quickSendVolume || "0")
   }
   
   let ownBidVolume = {}
@@ -123,30 +125,37 @@ export function OrderBook({socket, orderData, ownVolume, volume}) {
   )
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Own Bid</th>
-          <th>Bid Volume</th>
-          <th>Price</th>
-          <th>Ask Volume</th>
-          <th>Own Ask</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows}
-      </tbody>
-    </table>
+    <div>
+    <input type="text" value={quickSendVolume} placeholder="Volume" onChange={(e)=>setQuickSendVolume(e.target.value)} />
+    <div className="order-book-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Own Bid</th>
+            <th>Bid Volume</th>
+            <th>Price</th>
+            <th>Ask Volume</th>
+            <th>Own Ask</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows}
+        </tbody>
+      </table>
+    </div>
+    </div>
   )
 }
 
-export function PriceHistory({bboHistory, lastDones}) {
-  console.log(bboHistory);
+export function PriceHistory({bboHistory, lastDones, darkTheme}) {
   const ld = util.reduceLastDones(lastDones);
   const bbo = util.reduceBBOHistory(bboHistory);
   const line_t = util.repeatElements(bbo.t)
 
+  const { theme, toggleTheme } = useContext(ThemeContext); 
+
   return (
+    <div className="price-history-container">
     <Plot 
       data={[
         {
@@ -170,7 +179,7 @@ export function PriceHistory({bboHistory, lastDones}) {
           y: bbo.bp,
           type: 'scatter',
           mode: 'markers',
-          marker: {color: 'purple'},
+          marker: {color: '#567868'},
           name: 'Best bid'
         },
         {
@@ -178,7 +187,7 @@ export function PriceHistory({bboHistory, lastDones}) {
           y: bbo.op,
           type: 'scatter',
           mode: 'markers',
-          marker: {color: 'purple'},
+          marker: {color: '#954242'},
           name: 'Best offer'
         },
         {
@@ -186,7 +195,7 @@ export function PriceHistory({bboHistory, lastDones}) {
           y: util.repeatElements(bbo.bp).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
-          marker: {color: 'purple'},
+          marker: {color: '#567868'},
           showlegend: false,
           hoverinfo: 'skip'
         },
@@ -195,7 +204,7 @@ export function PriceHistory({bboHistory, lastDones}) {
           y: util.repeatElements(bbo.op).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
-          marker: {color: 'purple'},
+          marker: {color: '#954242'},
           showlegend: false,
           hoverinfo: 'skip'
         }
@@ -204,12 +213,16 @@ export function PriceHistory({bboHistory, lastDones}) {
         title: 'Price History',
         uirevision: true,
         xaxis: {
-          title: 'Time'
+          title: 'Time',
         },
         yaxis: {
           title: 'Price'
-        }
+        },
+        plot_bgcolor: theme ? "#1c1c1c" : "white",
+        paper_bgcolor: theme ? "#1c1c1c" : "white",
+        font: {family:"Roboto", color: theme ? "white" : "black"}
       }}
     />
+    </div>
   )
 }

@@ -10,13 +10,13 @@ body {
 }
 
 body.dark {
-  background-color: #1c1c1c;
+  background-color: #242424;
   color: white;
 }
 
 div.order-book-wrapper {
   overflow-y: scroll;
-  height: 600px;
+  height: 60vh;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -29,8 +29,13 @@ div, p, button {
   margin: 3px 9px;
 }
 
+div.modal-overlay {
+  margin: auto;
+}
+
 a {
   color: #007bff;
+  cursor: pointer;
 }
 
 button {
@@ -61,7 +66,7 @@ button.sell:hover {
 }
 
 input, select {
-  width: 25%;
+  width: 30%;
   padding: 5px;
   margin: 2px 4px;
   border: 1px solid #ccc;
@@ -86,18 +91,89 @@ th, td {
 thead {
   background-color: #bdbdbd;
   position: sticky;
-  top: 0; /* Fix the header at the top */
+  top: 0;
   z-index: 2;
 }
 
 ul {
   overflow: hidden;
   overflow-y: auto;
-  min-height:20vh;
-  height:20vh; 
-  max-height:20vh;
+  height: 35vh; 
+  list-style-type: none;
+  padding: 0;
 }
 
+ul.menu-bar {
+  height: auto;
+}
+.menu-bar {
+  display: inline;
+  align-items: center;
+  background-color: #cac4e2;
+  border-radius: 16px;
+}
+.menu-bar a {
+  color: #303030;
+}
+.menu-bar a:hover {
+  color: black;
+}
+
+.material-symbols-outlined {
+  font-size: 32px;
+  display: block;
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 350,
+  'GRAD' 0,
+  'opsz' 48
+}
+
+li {
+  margin: 16px 8px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  background-color: white;
+  overflow-x: scroll;
+  min-width: 36vw;
+}
+.modal.dark {
+  background-color: #242424;
+}
+.modal-content {
+  margin-top: 18px;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.close-button:hover{
+  background-color: #850606;
+}
 .navbar {
   overflow: hidden;
 }
@@ -125,12 +201,17 @@ ul {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto;
   gap: 20px;
-  padding: 20px;
+}
+
+.room-layout {
+  display: grid;
+  grid-template-columns: 75px 1fr;
+  height: 100%;
+  align-items: start;
 }
 
 .price-history-container {
   grid-column: span 1;
-
 }
 
 @media (max-width: 768px) {

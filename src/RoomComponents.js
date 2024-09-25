@@ -1,7 +1,34 @@
-import {useState, useContext} from 'react'
+import {useState, useContext, useEffect} from 'react'
 import {ThemeContext} from './ThemeContext.js'
 import Plot from 'react-plotly.js'
 import * as util from './util.js'
+
+export function RoomMenu({handleExit, setPopupOpen}) {
+  return (
+    <ul className="menu-bar">
+      <li><a onClick={() => setPopupOpen(1)}>
+        <span className="material-symbols-outlined">monitoring</span>
+        <span>Price History</span>
+      </a></li>
+      <li><a onClick={() => setPopupOpen(2)}>
+        <div className="material-symbols-outlined">receipt</div>
+        Orders
+      </a></li>
+      <li><a onClick={() => setPopupOpen(3)}>
+        <div className="material-symbols-outlined">history</div>
+        Trades
+      </a></li>
+      <li><a onClick={() => setPopupOpen(4)}>
+        <div className="material-symbols-outlined">leaderboard</div>
+        Room Info
+      </a></li>
+      <li><a onClick={handleExit}>
+        <div className="material-symbols-outlined">door_open</div>
+        Exit Room
+      </a></li>
+    </ul>
+  )
+}
 
 export function BuyForm({socket}) {
   const [limitInput, setLimitInput] = useState('');
@@ -61,29 +88,42 @@ export function SellForm({socket}) {
 
 export function UserDataPanel({socket, roomUserData}) {
 
-  function handleDeleteOrder(side, order_id) {
-    socket.emit('delete', side, order_id);
-  }
-
-  const orderList = roomUserData.orders.map(order => 
-    <p>
-      {order.creation_time}: {order.side} {order.quantity} @ {order.limit_price} 
-      <button onClick={() => handleDeleteOrder(order.side, order.id)}>Delete Order</button>
-    </p>
-  );
-
-  const tradeList = roomUserData.trades.map(trade => 
-    <p>{trade.buyer_id} {trade.seller_id} {trade.volume} LOTS @ {trade.price}</p>
-  );
-
   return (
     <div>
       <p>Username: {roomUserData.username}</p>
       <p>User ID: {roomUserData.user_id}</p>
       <p>Cash: {roomUserData.cash}</p>
       <p>Position: {roomUserData.position}</p>
-      <p>Orders: </p><ul>{orderList}</ul>
-      <p>Trades: </p><ul>{tradeList}</ul>
+    </div>
+  )
+}
+
+export function Orders({socket, orders}) {
+  function handleDeleteOrder(side, order_id) {
+    socket.emit('delete', side, order_id);
+  }
+  const orderList = orders.map(order => 
+    <p>
+      {order.creation_time}: {order.side} {order.quantity} @ {order.limit_price} 
+      <button onClick={() => handleDeleteOrder(order.side, order.id)}>Delete Order</button>
+    </p>
+  );
+  return (
+    <div>
+      <h2>Orders</h2>
+      <ul>{orderList}</ul>
+    </div>
+  )
+}
+
+export function Trades({trades}) {
+  const tradeList = trades.map(trade => 
+    <p>{trade.buyer_id} {trade.seller_id} {trade.volume} LOTS @ {trade.price}</p>
+  );
+  return (
+    <div>
+      <h2>Trades</h2>
+      <ul>{tradeList}</ul>
     </div>
   )
 }
@@ -147,12 +187,12 @@ export function OrderBook({socket, orderData, ownVolume}) {
   )
 }
 
-export function PriceHistory({bboHistory, lastDones, darkTheme}) {
+export function PriceHistory({bboHistory, lastDones}) {
   const ld = util.reduceLastDones(lastDones);
   const bbo = util.reduceBBOHistory(bboHistory);
-  const line_t = util.repeatElements(bbo.t)
+  const line_t = util.repeatElements(bbo.t);
 
-  const { theme, toggleTheme } = useContext(ThemeContext); 
+  const { theme } = useContext(ThemeContext); 
 
   return (
     <div className="price-history-container">
@@ -179,7 +219,7 @@ export function PriceHistory({bboHistory, lastDones, darkTheme}) {
           y: bbo.bp,
           type: 'scatter',
           mode: 'markers',
-          marker: {color: '#567868'},
+          marker: {color: '#75E475'},
           name: 'Best bid'
         },
         {
@@ -187,7 +227,7 @@ export function PriceHistory({bboHistory, lastDones, darkTheme}) {
           y: bbo.op,
           type: 'scatter',
           mode: 'markers',
-          marker: {color: '#954242'},
+          marker: {color: '#FF7171'},
           name: 'Best offer'
         },
         {
@@ -195,7 +235,7 @@ export function PriceHistory({bboHistory, lastDones, darkTheme}) {
           y: util.repeatElements(bbo.bp).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
-          marker: {color: '#567868'},
+          marker: {color: '#75E475'},
           showlegend: false,
           hoverinfo: 'skip'
         },
@@ -204,7 +244,7 @@ export function PriceHistory({bboHistory, lastDones, darkTheme}) {
           y: util.repeatElements(bbo.op).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
-          marker: {color: '#954242'},
+          marker: {color: '#FF7171'},
           showlegend: false,
           hoverinfo: 'skip'
         }
@@ -218,11 +258,59 @@ export function PriceHistory({bboHistory, lastDones, darkTheme}) {
         yaxis: {
           title: 'Price'
         },
-        plot_bgcolor: theme ? "#1c1c1c" : "white",
-        paper_bgcolor: theme ? "#1c1c1c" : "white",
+        plot_bgcolor: theme ? "#242424" : "white",
+        paper_bgcolor: theme ? "#242424" : "white",
         font: {family:"Roboto", color: theme ? "white" : "black"}
       }}
     />
+    </div>
+  )
+}
+
+export function RoomInfo({roomInfo, playerData}) {
+  const [settleValue, setSettleValue] = useState();
+
+  const leaderboard = Object.entries(playerData).map(([key, value]) => 
+    <p>
+      {key}: Cash {value.cash} position {value.position} 
+    </p>
+  );
+
+  return (
+    <div>
+      <h2>Room Info</h2>
+      <p>Room name: {roomInfo.room_name}</p>
+      <p>Join code: {roomInfo.join_code}</p>
+      <p>Creation time: {roomInfo.creation_time}</p>
+      <ul>
+        {leaderboard}
+      </ul>
+    </div>
+  )
+}
+
+export function Popup({popupOpen, setPopupOpen, children}) {
+  const { theme } = useContext(ThemeContext);
+
+  useEffect(() => {
+    if (popupOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    }
+  }, [popupOpen])
+
+  return (
+    <div className="modal-overlay">
+      <div className={`modal ${theme ? 'dark' : ''}`}>
+        <button className="close-button" onClick={() => setPopupOpen(0)}>&times;</button>
+        <div className="modal-content">
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

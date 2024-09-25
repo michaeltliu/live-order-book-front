@@ -1,12 +1,10 @@
 import './App.css';
-import {useState, useEffect} from 'react'
-import {BuyForm, SellForm, UserDataPanel, OrderBook, PriceHistory} from './RoomComponents.js'
-import { ThemeProvider, ThemeButton } from './ThemeContext.js';
+import {useState, useEffect, useContext} from 'react'
+import * as RC from './RoomComponents.js'
+import { ThemeProvider, ThemeContext } from './ThemeContext.js';
 import Navbar from './Navbar.js'
 import About from './about.js'
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Popup from 'reactjs-popup';
-import 'reactjs-popup/dist/index.css';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { io } from 'socket.io-client';
 
 /*const BACKEND_URL = process.env.REACT_APP_MODE === 'PROD' ? 'https://live-order-book-backend-287349709563.us-central1.run.app' : 'http://127.0.0.1:8080';*/
@@ -56,12 +54,15 @@ function LoginForm({setIsLoggedIn, setUserData}) {
 
 function LoggedInView({setIsLoggedIn, setUserData, userData}) {
   const [socket, setSocket] = useState(null);
-  const [roomId, setRoomId] = useState('');
+  const [roomInfo, setRoomInfo] = useState(null);
   const [roomUserData, setRoomUserData] = useState('');
   const [bboHistory, setBBOHistory] = useState([]);
   const [lastDones, setLastDones] = useState([]);
   const [orderData, setOrderData] = useState({ bids: {}, asks: {} });
-  const [gameInfo, setGameInfo] = useState();
+  const [playerData, setPlayerData] = useState([]);
+
+  const joinRoomState = {roomInfo, roomUserData, bboHistory, lastDones, orderData, playerData};
+  const joinRoomSetters = {setRoomInfo, setRoomUserData, setBBOHistory, setLastDones, setOrderData, setPlayerData};
 
   useEffect(() => {
     const socketio = io(BACKEND_URL, {
@@ -70,7 +71,7 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
       });
 
     socketio.on('update_user_data', (data) => {
-      setUserData(data);
+      setUserData(prev => ({...prev, ...data}));
     })
 
     socketio.on('update_roomuser_data', (data) => {
@@ -100,43 +101,54 @@ function LoggedInView({setIsLoggedIn, setUserData, userData}) {
       })
     })
 
+    socketio.on('update_player_data', (data) => {
+      setPlayerData(prev => ({...prev, ...{[data.username]:data}}));
+    })
+
     setSocket(socketio);
 
     return () => {
       socketio.off('update_user_data');
+      socketio.off('update_roomuser_data');
       socketio.off('update_bbo_history');
       socketio.off('update_ld_history');
       socketio.off('update_order_book');
+      socketio.off('update_player_data');
       socketio.disconnect();
     }
   }, []);
 
   return (
-    roomId ? (
-      <RoomView socket={socket} roomUserData={roomUserData} bboHistory={bboHistory} 
-      lastDones={lastDones} orderData={orderData} setRoomId={setRoomId}/>
+    roomInfo ? (
+      <RoomView socket={socket} joinRoomState={joinRoomState} setRoomInfo={setRoomInfo}/>
     ) : (
-      <SelectRoomView socket={socket} userData={userData} setIsLoggedIn={setIsLoggedIn} setRoomId={setRoomId} 
-      setRoomUserData={setRoomUserData} setBBOHistory={setBBOHistory} setLastDones={setLastDones} setOrderData={setOrderData}/>
+      <SelectRoomView socket={socket} userData={userData} setIsLoggedIn={setIsLoggedIn} joinRoomSetters={joinRoomSetters}/>
     )
   )
 }
 
 function SelectRoomView({
-    socket, userData, setIsLoggedIn, setRoomId, setRoomUserData, setBBOHistory, setLastDones, setOrderData
+    socket, userData, setIsLoggedIn, joinRoomSetters
   }) 
 {
+  const {setRoomInfo, setRoomUserData, setBBOHistory, setLastDones, setOrderData, setPlayerData} = joinRoomSetters;
   const [createRoomName, setCreateRoomName] = useState('');
   const [joinRoomId, setJoinRoomId] = useState('');
   const [yourRoomSelection, setYourRoomSelection] = useState('');
+  const [message, setMessage] = useState('');
 
   function joinRoom(join_code) {
-    socket.emit('join-room', join_code, response => {
-      setRoomUserData(response.user_data)
-      setBBOHistory(response.bbo_history)
-      setLastDones(response.ld_history)
-      setOrderData(response.order_book)
-      setRoomId(response.room_id)
+    socket.emit('join-room', join_code.trim(), response => {
+      if (response.status) {
+        setRoomUserData(response.user_data)
+        setBBOHistory(response.bbo_history)
+        setLastDones(response.ld_history)
+        setOrderData(response.order_book)
+        setPlayerData(response.player_data)
+        setRoomInfo(response.room_info)
+      } else {
+        setMessage('Could not find room ID')
+      }
     })
   }
 
@@ -183,6 +195,7 @@ function SelectRoomView({
         placeholder="Room ID" onChange={(e)=>setJoinRoomId(e.target.value)} />
         <button type="submit">Go!</button>
       </form>
+      {message}
       <h2>Your rooms</h2>
       <form onSubmit={yourRoomsSubmit}>
         <select value={yourRoomSelection} onChange={(e)=>setYourRoomSelection(e.target.value)}>
@@ -195,24 +208,50 @@ function SelectRoomView({
   )
 }
 
-function RoomView({socket, roomUserData, bboHistory, lastDones, orderData, setRoomId}) {
-  const [isPriceHistoryOpen, setIsPriceHistoryOpen] = useState(false);
+function RoomView({socket, joinRoomState, setRoomInfo}) {
+  const {roomInfo, roomUserData, bboHistory, lastDones, orderData, playerData} = joinRoomState;
+  const [popupOpen, setPopupOpen] = useState(0);
 
   function handleExit() {
     socket.emit('exit-room');
-    setRoomId('');
+    setRoomInfo(null);
   }
 
   return (
-    <div className="container2col">
-      <UserDataPanel socket={socket} roomUserData={roomUserData} />
-      <div>
-        <BuyForm socket={socket} />
-        <SellForm socket={socket} />
+    <div className='room-layout'>
+      <RC.RoomMenu handleExit={handleExit} setPopupOpen={setPopupOpen}/>
+      <div className='container2col'>
+        <RC.UserDataPanel socket={socket} roomUserData={roomUserData} />
+        <div>
+          <RC.BuyForm socket={socket} />
+          <RC.SellForm socket={socket} />
+        </div>
+        <RC.OrderBook socket={socket} orderData={orderData} ownVolume={roomUserData.orders}/>
       </div>
-      <PriceHistory bboHistory={bboHistory} lastDones={lastDones}/>
-      <OrderBook socket={socket} orderData={orderData} ownVolume={roomUserData.orders}/>
-      <button onClick={() => handleExit()}>Exit Room</button>
+
+      {popupOpen == 1 && (
+        <RC.Popup popupOpen={popupOpen} setPopupOpen={setPopupOpen}>
+          <RC.PriceHistory bboHistory={bboHistory} lastDones={lastDones}/>
+        </RC.Popup>
+      )}
+
+      {popupOpen == 2 && (
+        <RC.Popup popupOpen={popupOpen} setPopupOpen={setPopupOpen}>
+          <RC.Orders socket={socket} orders={roomUserData.orders}/>
+        </RC.Popup>
+      )}
+
+      {popupOpen == 3 && (
+        <RC.Popup popupOpen={popupOpen} setPopupOpen={setPopupOpen}>
+          <RC.Trades trades={roomUserData.trades}/>
+        </RC.Popup>
+      )}
+
+      {popupOpen == 4 && (
+        <RC.Popup popupOpen={popupOpen} setPopupOpen={setPopupOpen}>
+          <RC.RoomInfo roomInfo={roomInfo} playerData={playerData}/>
+        </RC.Popup>
+      )}
     </div>
   )
 }

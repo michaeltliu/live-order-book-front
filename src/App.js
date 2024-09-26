@@ -221,7 +221,7 @@ function RoomView({socket, joinRoomState, setRoomInfo}) {
     <div className='room-layout'>
       <RC.RoomMenu handleExit={handleExit} setPopupOpen={setPopupOpen}/>
       <div className='container2col'>
-        <RC.UserDataPanel socket={socket} roomUserData={roomUserData} />
+        <RC.UserDataPanel roomUserData={roomUserData} />
         <div>
           <RC.BuyForm socket={socket} />
           <RC.SellForm socket={socket} />

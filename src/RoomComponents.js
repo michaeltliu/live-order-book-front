@@ -86,7 +86,7 @@ export function SellForm({socket}) {
   )
 }
 
-export function UserDataPanel({socket, roomUserData}) {
+export function UserDataPanel({roomUserData}) {
 
   return (
     <div>
@@ -129,14 +129,31 @@ export function Trades({trades}) {
 }
 
 export function OrderBook({socket, orderData, ownVolume}) {
-  const [quickSendVolume, setQuickSendVolume] = useState(1);
-  
+  const [quickSendVolume, setQuickSendVolume] = useState('');
+  const [volumeBarC, setVolumeBarC] = useState(null);
+
+  function width(volume) {
+    const x = parseInt(volumeBarC);
+    const c = x > 0 ? x : 100;
+    return Math.atan(volume/c) * 200/Math.PI;
+  }
+
   function sendBid(limit) {
-    socket.emit('buy', limit, quickSendVolume || "0")
+    const volume = parseInt(quickSendVolume);
+    if (volume > 0) {
+      socket.emit('buy', limit, volume);
+    }
   }
 
   function sendAsk(limit) {
-    socket.emit('sell', limit, quickSendVolume || "0")
+    const volume = parseInt(quickSendVolume);
+    if (volume > 0) {
+      socket.emit('sell', limit, volume);
+    }
+  }
+
+  function deleteLevel(side, level) {
+    socket.emit('delete-level', side, level);
   }
   
   let ownBidVolume = {}
@@ -152,22 +169,28 @@ export function OrderBook({socket, orderData, ownVolume}) {
 
   const rows = Array(100).fill().map((_,ind) => { 
     let i = 99 - ind;
+    let b = orderData.bids[i];
+    let a = orderData.asks[i];
     return (
     <tr>
-      <td>{ownBidVolume[i] || ""}</td>
-      <td onClick={() => sendBid(i)}>{(orderData.bids[i]==null || orderData.bids[i]==0) ? "" : orderData.bids[i]}</td>
+      <td onClick={() => deleteLevel('B', i)}>{ownBidVolume[i] || ""}</td>
+      <td onClick={() => sendBid(i)} style={{direction:'rtl'}}>
+        <div className="volume-bar" style={{width: `${width(b)}%`}}>{(b==null || b==0) ? "" : b}</div>
+      </td>
       <td>{i}</td>
-      <td onClick={() => sendAsk(i)}>{(orderData.asks[i]==null || orderData.asks[i]==0) ? "" : orderData.asks[i]}</td>
-      <td>{ownAskVolume[i] || ""}</td>
+      <td onClick={() => sendAsk(i)}>
+        <div className="volume-bar" style={{width: `${width(a)}%`}}>{(a==null || a==0) ? "" : a}</div>
+      </td>
+      <td onClick={() => deleteLevel('S', i)}>{ownAskVolume[i] || ""}</td>
     </tr>
     )
-  }
-  )
+  })
 
   return (
     <div>
     <input type="text" value={quickSendVolume} placeholder="Volume" onChange={(e)=>setQuickSendVolume(e.target.value)} />
-    <div className="order-book-wrapper">
+    <input type="text" value={volumeBarC} placeholder="Bar Length Setting" onChange={(e)=>setVolumeBarC(e.target.value)} />
+    <div className="table-wrapper">
       <table>
         <thead>
           <tr>
@@ -199,27 +222,11 @@ export function PriceHistory({bboHistory, lastDones}) {
     <Plot 
       data={[
         {
-          x: ld.buy_t,
-          y: ld.buy_p,
-          type: 'scatter',
-          mode: 'markers',
-          marker: {color: 'green', symbol: 'triangle-up', size: 9},
-          name: 'Last done buy aggressor',
-        },
-        {
-          x: ld.sell_t,
-          y: ld.sell_p,
-          type: 'scatter',
-          mode: 'markers',
-          marker: {color: 'red', symbol: 'triangle-down', size: 9},
-          name: 'Last done sell aggressor'
-        },
-        {
           x: bbo.t,
           y: bbo.bp,
           type: 'scatter',
           mode: 'markers',
-          marker: {color: '#75E475'},
+          marker: {color: '#64d764'},
           name: 'Best bid'
         },
         {
@@ -227,7 +234,7 @@ export function PriceHistory({bboHistory, lastDones}) {
           y: bbo.op,
           type: 'scatter',
           mode: 'markers',
-          marker: {color: '#FF7171'},
+          marker: {color: '#f85d5d'},
           name: 'Best offer'
         },
         {
@@ -235,7 +242,7 @@ export function PriceHistory({bboHistory, lastDones}) {
           y: util.repeatElements(bbo.bp).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
-          marker: {color: '#75E475'},
+          marker: {color: '#64d764'},
           showlegend: false,
           hoverinfo: 'skip'
         },
@@ -244,9 +251,25 @@ export function PriceHistory({bboHistory, lastDones}) {
           y: util.repeatElements(bbo.op).slice(0, -1),
           type: 'scatter',
           mode: 'lines',
-          marker: {color: '#FF7171'},
+          marker: {color: '#f85d5d'},
           showlegend: false,
           hoverinfo: 'skip'
+        },
+        {
+          x: ld.buy_t,
+          y: ld.buy_p,
+          type: 'scatter',
+          mode: 'markers',
+          marker: {color: 'green', symbol: 'triangle-up', size: 10},
+          name: 'Last done buy aggressor',
+        },
+        {
+          x: ld.sell_t,
+          y: ld.sell_p,
+          type: 'scatter',
+          mode: 'markers',
+          marker: {color: 'red', symbol: 'triangle-down', size: 10},
+          name: 'Last done sell aggressor'
         }
       ]}
       layout={{
@@ -258,8 +281,8 @@ export function PriceHistory({bboHistory, lastDones}) {
         yaxis: {
           title: 'Price'
         },
-        plot_bgcolor: theme ? "#242424" : "white",
-        paper_bgcolor: theme ? "#242424" : "white",
+        plot_bgcolor: theme ? "#1d1d1d" : "white",
+        paper_bgcolor: theme ? "#1d1d1d" : "white",
         font: {family:"Roboto", color: theme ? "white" : "black"}
       }}
     />
@@ -271,9 +294,12 @@ export function RoomInfo({roomInfo, playerData}) {
   const [settleValue, setSettleValue] = useState();
 
   const leaderboard = Object.entries(playerData).map(([key, value]) => 
-    <p>
-      {key}: Cash {value.cash} position {value.position} 
-    </p>
+    <tr>
+      <td>{key}</td>
+      <td>{value.cash}</td>
+      <td>{value.position}</td>
+      <td>{value.cash + value.position * settleValue || ""}</td>
+    </tr>
   );
 
   return (
@@ -282,9 +308,24 @@ export function RoomInfo({roomInfo, playerData}) {
       <p>Room name: {roomInfo.room_name}</p>
       <p>Join code: {roomInfo.join_code}</p>
       <p>Creation time: {roomInfo.creation_time}</p>
-      <ul>
-        {leaderboard}
-      </ul>
+      <br/>
+      <input type="text" value={settleValue} name="settle-value" 
+      placeholder="Settlement value" onChange={(e)=>setSettleValue(e.target.value)}/>
+      <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Cash</th>
+            <th>Position</th>
+            <th>Profit/Loss</th>
+          </tr>
+        </thead>
+        <tbody>
+          {leaderboard}
+        </tbody>
+      </table>
+    </div>
     </div>
   )
 }

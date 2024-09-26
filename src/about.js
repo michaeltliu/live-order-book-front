@@ -25,10 +25,9 @@ function About() {
                 settles in dollars to the number of regular season games they win.
             </p>
             <h2>Roadmap &amp; Known Bugs</h2>
-            <li>Popup box with stats for all the users in a room</li>
             <li>Configurable room setings</li>
             <li>Front end UI/UX, especially on mobile</li>
-            <li>Handling inactive sessions and reconnects</li>
+            <li>Handling inactive sessions, page refreshes, and reconnects</li>
             <p>~ ML</p>
             <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScy2ES7_4yuIXgXcxEG6SYfObsCP-ozWbd1cbmUmgY9H6LK7Q/viewform?embedded=true" 
             width="450" height="750" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>

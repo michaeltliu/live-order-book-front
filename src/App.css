@@ -10,23 +10,27 @@ body {
 }
 
 body.dark {
-  background-color: #242424;
+  background-color: #1d1d1d;
   color: white;
 }
 
-div.order-book-wrapper {
+div.table-wrapper {
   overflow-y: scroll;
-  height: 60vh;
+  max-height: 60vh;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-div.order-book-wrapper::-webkit-scrollbar {
+div.table-wrapper::-webkit-scrollbar {
   display: none;
 }
 
 div, p, button {
   margin: 3px 9px;
+}
+div.volume-bar {
+  margin: 0px;
+  background-color: #007bff;
 }
 
 div.modal-overlay {
@@ -75,17 +79,23 @@ input, select {
 table {
   width: 100%;
   border-collapse: collapse;
-  margin: 10px 0;
+  margin: 0;
 }
 
 td:hover {
-  background-color: #bdbdbd4f;
+  background-color: #bdbdbd9c;
+}
+td:hover div {
+  background-color: #007bffd0;
 }
 
 th, td {
   border: 1px solid #ddd;
-  padding: 6px;
   text-align: center;
+}
+
+th {
+  padding: 3px;
 }
 
 thead {
@@ -98,9 +108,11 @@ thead {
 ul {
   overflow: hidden;
   overflow-y: auto;
-  height: 35vh; 
   list-style-type: none;
   padding: 0;
+}
+.modal ul {
+  height: 35vh; 
 }
 
 ul.menu-bar {
@@ -155,7 +167,7 @@ li {
   min-width: 36vw;
 }
 .modal.dark {
-  background-color: #242424;
+  background-color: #1d1d1d;
 }
 .modal-content {
   margin-top: 18px;
@@ -208,10 +220,6 @@ li {
   grid-template-columns: 75px 1fr;
   height: 100%;
   align-items: start;
-}
-
-.price-history-container {
-  grid-column: span 1;
 }
 
 @media (max-width: 768px) {

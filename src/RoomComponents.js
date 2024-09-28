@@ -291,14 +291,14 @@ export function PriceHistory({bboHistory, lastDones}) {
 }
 
 export function RoomInfo({roomInfo, playerData}) {
-  const [settleValue, setSettleValue] = useState();
+  const [settleValue, setSettleValue] = useState("");
 
   const leaderboard = Object.entries(playerData).map(([key, value]) => 
     <tr>
       <td>{key}</td>
       <td>{value.cash}</td>
       <td>{value.position}</td>
-      <td>{value.cash + value.position * settleValue || ""}</td>
+      <td>{settleValue ? (value.cash + value.position * settleValue || "") : ""}</td>
     </tr>
   );
 

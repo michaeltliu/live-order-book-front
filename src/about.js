@@ -5,14 +5,13 @@ function About() {
         <div>
             <h1>About LiveOrderBook.xyz</h1>
             <p>
-                LiveOrderBook is built as a platform for betting on real-world events against friends. 
-                Every room features its own simulated order book and exchange, allowing you to trade contracts
+                LiveOrderBook is a social prediction market for sports, politics, or anything you want. 
+                Every room features its own simulated order book and exchange, allowing you to trade contracts against friends
                 in real-time. Whether you're betting on an NFL game or on random everyday prop bets, LiveOrderBook 
-                offers a unique alternative to traditional casinos
-                and sportsbooks. With no preset limitations or restrictions, every order book is a blank slate,
-                giving you full control over the contracts you create and trade. To get started, create a room 
+                offers a unique alternative to traditional casinos and sportsbooks. With no preset limitations, 
+                every order book is a blank slate, giving you full control over what you want to bet on. To get started, create a room 
                 and invite your friends. Submit orders, track market activity, and view price history all from the app. 
-                Perfect for those who enjoy forecasting in a dynamic, fair marketplace!
+                Perfect for those who enjoy forecasting in a dynamic, fair marketplace.
             </p>
             <h3>Example Room 1</h3>
             <p>
@@ -22,7 +21,8 @@ function About() {
             <h3>Example Room 2</h3>
             <p>
                 To bet on how the Dallas Cowboys perform this season, create a contract that
-                settles in dollars to the number of regular season games they win.
+                settles in dollars to the number of regular season games they win. For bigger price swings, let the contract 
+                pay a dollar for each regular season win over 5, if any.
             </p>
             <h2>Roadmap &amp; Known Bugs</h2>
             <li>Configurable room setings</li>

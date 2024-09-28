@@ -1,7 +1,7 @@
 import './App.css';
-import {useState, useEffect, useContext} from 'react'
+import {useState, useEffect} from 'react'
 import * as RC from './RoomComponents.js'
-import { ThemeProvider, ThemeContext } from './ThemeContext.js';
+import { ThemeProvider } from './ThemeContext.js';
 import Navbar from './Navbar.js'
 import About from './about.js'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";

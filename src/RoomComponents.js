@@ -48,7 +48,7 @@ export function BuyForm({socket}) {
     <>
       <form onSubmit={handleSubmit}>
         <input type="text" value={limitInput} name="limit" 
-        placeholder="Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
+        placeholder="Buy Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
         <input type="text" value={quantityInput} name="quantity" 
         placeholder="Quantity" onChange={(e)=>setQuantityInput(e.target.value)} /><br/>
         <button class="buy" type="submit">Buy</button>
@@ -76,7 +76,7 @@ export function SellForm({socket}) {
     <>
       <form onSubmit={handleSubmit}>
         <input type="text" value={limitInput} name="limit" 
-        placeholder="Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
+        placeholder="Sell Limit Price" onChange={(e)=>setLimitInput(e.target.value)}/><br/>
         <input type="text" value={quantityInput} name="quantity" 
         placeholder="Quantity" onChange={(e)=>setQuantityInput(e.target.value)} /><br/>
         <button class="sell" type="submit">Sell</button>
@@ -104,13 +104,13 @@ export function Orders({socket, orders}) {
   }
   const orderList = orders.map(order => 
     <p>
-      {order.creation_time}: {order.side} {order.quantity} @ {order.limit_price} 
+      {order.creation_time} -- {order.side=='B' ? 'BUY' : 'SELL'} {order.quantity} LOTS @ {order.limit_price} LMT
       <button onClick={() => handleDeleteOrder(order.side, order.id)}>Delete Order</button>
     </p>
   );
   return (
     <div>
-      <h2>Orders</h2>
+      <h2>My Orders</h2>
       <ul>{orderList}</ul>
     </div>
   )
@@ -122,7 +122,7 @@ export function Trades({trades}) {
   );
   return (
     <div>
-      <h2>Trades</h2>
+      <h2>My Trades</h2>
       <ul>{tradeList}</ul>
     </div>
   )

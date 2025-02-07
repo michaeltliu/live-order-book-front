@@ -24,11 +24,22 @@ function About() {
                 settles in dollars to the number of regular season games they win. For bigger price swings, let the contract 
                 pay a dollar for each regular season win over 5, if any.
             </p>
+            <h2>Tips</h2>
+            <li>To send an order, use the "Buy" form or "Sell" form. Alternatively, you can enter your desired order quantity in the 
+                "Volume" input box and click on a cell under "Bid Volume" or "Ask Volume" to place an order at the corresponding price level.
+            </li>
+            <li>
+                The price history graph consists of two line graphs and two scatter plots. The light green line graph denotes the best bid
+                price and the light red line graph denotes the best offer price at every point in time. The dark green scatter points 
+                denote trades that have occurred in the market where the buyer was the liquidity taker. The dark red scatter points are
+                trades where the seller was liquidity taker. The x-coordinate of a scatter point is the time of the trade and the
+                y-coordinate is the price the trade occurred at.
+            </li>
             <h2>Roadmap &amp; Known Bugs</h2>
             <li>Configurable room setings</li>
             <li>Front end UI/UX, especially on mobile</li>
             <li>Handling inactive sessions, page refreshes, and reconnects</li>
-            <p>~ ML</p>
+            <p>~ ML, SL</p>
             <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScy2ES7_4yuIXgXcxEG6SYfObsCP-ozWbd1cbmUmgY9H6LK7Q/viewform?embedded=true" 
             width="450" height="750" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
         </div>
